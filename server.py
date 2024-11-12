@@ -6,41 +6,74 @@ SERVER_IP = '82.112.245.62'
 SERVER_PORT = 6969
 
 # Lista para armazenar clientes conectados
-clients = []
-server_ready = threading.Event()
+clients = {}
+server_lock = threading.Lock()
 
 def handle_client(client_socket, client_address):
+    with server_lock:
+        clients[client_address] = client_socket
     print(f"[LOG] Cliente conectado: {client_address}")
-    clients.append(client_socket)
 
-    # Espera até que o servidor "entre no chat"
-    server_ready.wait()
-
-    while True:
-        try:
+    try:
+        # Espera até que o servidor autorize a conexão
+        client_socket.send("AGUARDANDO AUTORIZAÇÃO DO SERVIDOR...\n".encode('utf-8'))
+        while True:
             msg = client_socket.recv(1024).decode('utf-8')
-            if not msg:
-                break
-            print(f"[{client_address}] {msg}")
-            broadcast(f"[{client_address}] {msg}", client_socket)
-        except ConnectionResetError:
-            break
+            if msg:
+                print(f"[{client_address}] {msg}")
+    except ConnectionResetError:
+        print(f"[LOG] Cliente desconectado: {client_address}")
+    finally:
+        with server_lock:
+            del clients[client_address]
+        client_socket.close()
 
-    print(f"[LOG] Cliente desconectado: {client_address}")
-    clients.remove(client_socket)
-    client_socket.close()
+def list_clients():
+    print("\nClientes conectados:")
+    with server_lock:
+        for i, addr in enumerate(clients.keys(), start=1):
+            print(f"{i}. {addr}")
+    print()
 
-def broadcast(message, sender_socket):
-    for client in clients:
-        if client != sender_socket:
-            client.send(message.encode('utf-8'))
+def select_client():
+    list_clients()
+    try:
+        choice = int(input("Selecione um cliente pelo número (ou 0 para voltar): "))
+        with server_lock:
+            if 0 < choice <= len(clients):
+                return list(clients.items())[choice - 1]
+    except ValueError:
+        pass
+    return None
 
-def server_chat():
-    server_ready.set()
-    print("[SERVIDOR] Você entrou no chat!")
+def start_chat(client_socket, client_address):
+    client_socket.send("CONEXÃO AUTORIZADA\n".encode('utf-8'))
+    print(f"[CHAT INICIADO] Conversando com {client_address}")
+    
     while True:
-        msg = input("[SERVIDOR]: ")
-        broadcast(f"[SERVIDOR]: {msg}", None)
+        msg = input(f"[SERVIDOR - {client_address}]: ")
+        if msg.lower() == 'menu':
+            client_socket.send("CHAT EM STANDBY. AGUARDE...\n".encode('utf-8'))
+            break
+        client_socket.send(f"[SERVIDOR]: {msg}\n".encode('utf-8'))
+
+def main_menu():
+    while True:
+        print("\n--- MENU DO SERVIDOR ---")
+        print("1. Listar clientes conectados")
+        print("2. Iniciar chat com cliente")
+        print("3. Sair")
+        choice = input("Escolha uma opção: ")
+
+        if choice == '1':
+            list_clients()
+        elif choice == '2':
+            selected = select_client()
+            if selected:
+                start_chat(*selected)
+        elif choice == '3':
+            print("Encerrando servidor...")
+            break
 
 def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -48,11 +81,11 @@ def main():
     server.listen(5)
     print(f"[STARTING] Servidor iniciado em {SERVER_IP}:{SERVER_PORT}")
 
-    threading.Thread(target=server_chat, daemon=True).start()
+    threading.Thread(target=main_menu, daemon=True).start()
 
     while True:
         client_socket, client_address = server.accept()
-        threading.Thread(target=handle_client, args=(client_socket, client_address)).start()
+        threading.Thread(target=handle_client, args=(client_socket, client_address), daemon=True).start()
 
 if __name__ == "__main__":
     main()
