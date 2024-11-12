@@ -1,3 +1,5 @@
+# server/server.py
+
 import socket
 import threading
 from server.menu import main_menu
@@ -25,6 +27,3 @@ def main():
         except KeyboardInterrupt:
             print("\n[SERVER] Shutting down...")
             break
-
-if __name__ == "__main__":
-    main()
