@@ -13,10 +13,10 @@ def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.settimeout(0)
     try:
-        s.connect(('10.254.254.254', 1))  # An IP address that will likely always be reachable
+        s.connect(('10.254.254.254', 1))
         local_ip = s.getsockname()[0]
     except Exception:
-        local_ip = '127.0.0.1'  # If there's an error, fall back to localhost
+        local_ip = '127.0.0.1'
     finally:
         s.close()
     return local_ip
@@ -31,10 +31,10 @@ def main():
     
     if local_ip == SERVER_IP:
         print("[INFO] Starting as Server...")
-        start_server()  # Inicia o servidor
+        start_server()
     else:
         print("[INFO] Starting as Client...")
-        start_client()  # Inicia o cliente
+        start_client()
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,3 @@
-# client/client.py
-
 import socket
 import threading
 from utils.constants import SERVER_IP, SERVER_PORT
@@ -30,6 +28,5 @@ def main():
     client.connect((SERVER_IP, SERVER_PORT))
     print("[CLIENTE] Conectado ao servidor.")
 
-    # Start receiving and sending messages in separate threads
     threading.Thread(target=receive_messages, args=(client,), daemon=True).start()
     threading.Thread(target=send_messages, args=(client,), daemon=True).start()

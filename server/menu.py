@@ -1,3 +1,5 @@
+#server/menu.py
+
 from server.client_manager import ClientManager
 
 def main_menu():

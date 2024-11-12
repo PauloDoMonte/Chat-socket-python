@@ -1,3 +1,5 @@
+#server/client_manager.py
+
 import threading
 from utils.constants import AUTHORIZED_MSG
 from server.handler import handle_client
@@ -46,8 +48,8 @@ class ClientManager:
         """
         Starts a chat session with a selected client.
         """
+        print(f"[INFO] Chatting with {client_address}")
         client_socket.send(AUTHORIZED_MSG.encode('utf-8'))
-        print(f"[CHAT STARTED] Chatting with {client_address}")
 
         def receive_messages():
             """
@@ -73,6 +75,5 @@ class ClientManager:
                     break
                 client_socket.send(f"[SERVER]: {msg}\n".encode('utf-8'))
 
-        # Start receiving and sending messages in separate threads
         threading.Thread(target=receive_messages, daemon=True).start()
         threading.Thread(target=send_messages, daemon=True).start()

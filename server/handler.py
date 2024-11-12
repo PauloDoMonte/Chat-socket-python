@@ -1,4 +1,6 @@
-from utils.constants import CLIENT_WAIT_MSG
+# server/handler
+
+from utils.constants import CLIENT_WAIT_MSG, AUTHORIZED_MSG
 
 def handle_client(client_socket, client_address, clients, server_lock):
     """
@@ -10,10 +12,16 @@ def handle_client(client_socket, client_address, clients, server_lock):
 
     try:
         client_socket.send(CLIENT_WAIT_MSG.encode('utf-8'))
+        
         while True:
             msg = client_socket.recv(1024).decode('utf-8')
             if msg:
                 print(f"[{client_address}] {msg}")
+
+                if msg.lower() == 'autorizado':
+                    client_socket.send(AUTHORIZED_MSG.encode('utf-8'))
+                    break
+
     except ConnectionResetError:
         print(f"[LOG] Client disconnected: {client_address}")
     finally:
