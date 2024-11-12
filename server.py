@@ -5,7 +5,7 @@ import threading
 SERVER_IP = '82.112.245.62'
 SERVER_PORT = 6969
 
-# Lista para armazenar clientes conectados
+# Dicionário para armazenar clientes conectados {endereço: socket}
 clients = {}
 server_lock = threading.Lock()
 
@@ -15,7 +15,7 @@ def handle_client(client_socket, client_address):
     print(f"[LOG] Cliente conectado: {client_address}")
 
     try:
-        # Espera até que o servidor autorize a conexão
+        # Aguarda autorização do servidor
         client_socket.send("AGUARDANDO AUTORIZAÇÃO DO SERVIDOR...\n".encode('utf-8'))
         while True:
             msg = client_socket.recv(1024).decode('utf-8')
@@ -41,7 +41,7 @@ def select_client():
         choice = int(input("Selecione um cliente pelo número (ou 0 para voltar): "))
         with server_lock:
             if 0 < choice <= len(clients):
-                return list(clients.items())[choice - 1]
+                return list(clients.items())[choice - 1]  # Retorna (socket, address)
     except ValueError:
         pass
     return None
@@ -49,7 +49,7 @@ def select_client():
 def start_chat(client_socket, client_address):
     client_socket.send("CONEXÃO AUTORIZADA\n".encode('utf-8'))
     print(f"[CHAT INICIADO] Conversando com {client_address}")
-    
+
     while True:
         msg = input(f"[SERVIDOR - {client_address}]: ")
         if msg.lower() == 'menu':
@@ -70,7 +70,8 @@ def main_menu():
         elif choice == '2':
             selected = select_client()
             if selected:
-                start_chat(*selected)
+                client_socket, client_address = selected
+                start_chat(client_socket, client_address)
         elif choice == '3':
             print("Encerrando servidor...")
             break
