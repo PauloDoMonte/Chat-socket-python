@@ -15,7 +15,6 @@ def handle_client(client_socket, client_address):
     print(f"[LOG] Cliente conectado: {client_address}")
 
     try:
-        # Aguarda autorização do servidor
         client_socket.send("AGUARDANDO AUTORIZAÇÃO DO SERVIDOR...\n".encode('utf-8'))
         while True:
             msg = client_socket.recv(1024).decode('utf-8')
@@ -31,7 +30,7 @@ def handle_client(client_socket, client_address):
 def list_clients():
     print("\nClientes conectados:")
     with server_lock:
-        for i, addr in enumerate(clients.keys(), start=1):
+        for i, (addr, _) in enumerate(clients.items(), start=1):
             print(f"{i}. {addr}")
     print()
 
@@ -41,7 +40,7 @@ def select_client():
         choice = int(input("Selecione um cliente pelo número (ou 0 para voltar): "))
         with server_lock:
             if 0 < choice <= len(clients):
-                return list(clients.items())[choice - 1]  # Retorna (socket, address)
+                return list(clients.items())[choice - 1]
     except ValueError:
         pass
     return None
@@ -70,7 +69,7 @@ def main_menu():
         elif choice == '2':
             selected = select_client()
             if selected:
-                client_socket, client_address = selected
+                client_socket, client_address = selected  # Desempacota a tupla corretamente
                 start_chat(client_socket, client_address)
         elif choice == '3':
             print("Encerrando servidor...")
@@ -85,8 +84,12 @@ def main():
     threading.Thread(target=main_menu, daemon=True).start()
 
     while True:
-        client_socket, client_address = server.accept()
-        threading.Thread(target=handle_client, args=(client_socket, client_address), daemon=True).start()
+        try:
+            client_socket, client_address = server.accept()
+            threading.Thread(target=handle_client, args=(client_socket, client_address), daemon=True).start()
+        except KeyboardInterrupt:
+            print("\n[SERVER] Encerrando...")
+            break
 
 if __name__ == "__main__":
     main()
