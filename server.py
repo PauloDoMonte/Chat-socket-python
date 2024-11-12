@@ -40,7 +40,8 @@ def select_client():
         choice = int(input("Selecione um cliente pelo número (ou 0 para voltar): "))
         with server_lock:
             if 0 < choice <= len(clients):
-                return list(clients.items())[choice - 1]
+                addr, sock = list(clients.items())[choice - 1]
+                return sock, addr  # Corrige ordem para start_chat.
     except ValueError:
         pass
     return None
@@ -69,7 +70,7 @@ def main_menu():
         elif choice == '2':
             selected = select_client()
             if selected:
-                client_socket, client_address = selected  # Desempacota a tupla corretamente
+                client_socket, client_address = selected  # Segue nova ordem de desempacotamento
                 start_chat(client_socket, client_address)
         elif choice == '3':
             print("Encerrando servidor...")
