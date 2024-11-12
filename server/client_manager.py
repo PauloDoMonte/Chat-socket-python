@@ -1,5 +1,6 @@
 import threading
 from utils.constants import AUTHORIZED_MSG
+from server.handler import handle_client
 
 class ClientManager:
     """
